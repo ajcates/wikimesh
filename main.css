@@ -1,0 +1,372 @@
+   /* Define reusable CSS variables for consistency */
+        :root {
+            /* Light theme colors */
+            --primary-bg: #333;
+            --secondary-bg: #555;
+            --background-light: #f4f4f4;
+            --text-color: #333;
+            --link-color: #0066cc;
+            --content-bg: #fff;
+            --input-bg: #f6f8fa; /* GitHub-inspired light input background */
+            --input-border: #d0d7de; /* GitHub-inspired light border */
+            /* Spacing and sizing */
+            --spacing-xs: 0.25rem; /* Extra small for tight padding */
+            --spacing-sm: 0.5rem;
+            --spacing-md: 0.75rem; /* Reduced for less horizontal space */
+            --spacing-lg: 1rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.5rem;
+            --border-radius: 0.25rem;
+        }
+
+        /* Dark theme overrides */
+        [data-theme="dark"] {
+            --primary-bg: #1a1a1a;
+            --secondary-bg: #333;
+            --background-light: #2a2a2a;
+            --text-color: #e0e0e0;
+            --link-color: #66b3ff;
+            --content-bg: #222;
+            --input-bg: #2d333b; /* GitHub-inspired dark input background */
+            --input-border: #444c56; /* GitHub-inspired dark border */
+        }
+
+        /* Reset defaults and set base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif; /* Use Roboto font */
+            color: var(--text-color);
+            font-size: var(--font-size-base);
+            line-height: 1.6;
+            background: var(--background-light);
+            transition: background-color 0.3s, color 0.3s; /* Smooth theme transition */
+        }
+
+        /* Header: Contains logo, search, and toolbar */
+        header {
+            background: var(--primary-bg);
+            color: white;
+            padding: var(--spacing-md);
+        }
+
+        .header-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .logo {
+            font-size: var(--font-size-base);
+            font-weight: 700;
+        }
+
+        /* Search bar */
+        .search-bar {
+            display: flex;
+            width: 50%;
+            max-width: 20rem;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: var(--spacing-xs); /* Reduced padding */
+            border: 1px solid var(--input-border);
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; /* GitHub-style monospace */
+            font-size: 0.875rem;
+        }
+
+        .search-bar button {
+            padding: var(--spacing-xs) var(--spacing-sm); /* Reduced padding */
+            background: var(--secondary-bg);
+            color: white;
+            border: none;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            cursor: pointer;
+        }
+
+        /* Toolbar: Navigation links */
+        .toolbar {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+            width: 100%;
+        }
+
+        .toolbar a {
+            color: white;
+            text-decoration: none;
+            padding: var(--spacing-xs) var(--spacing-sm); /* Reduced padding */
+            background: var(--secondary-bg);
+            border-radius: var(--border-radius);
+        }
+
+        .toolbar a:hover {
+            opacity: 0.9;
+        }
+
+        /* Sidebar: Collapsible categories with animation */
+        aside {
+            width: 12vw; /* Reduced width to save space */
+            min-width: 8rem;
+            background: var(--background-light);
+            padding: var(--spacing-md);
+            float: left;
+        }
+
+        .categories-toggle {
+            font-size: var(--font-size-base);
+            padding: var(--spacing-xs); /* Reduced padding */
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            background: var(--content-bg);
+            border-radius: var(--border-radius);
+        }
+
+        .categories-toggle::after {
+            content: '▼';
+        }
+
+        .categories-toggle.collapsed::after {
+            content: '▶';
+        }
+
+        .categories-list {
+            margin-top: var(--spacing-sm);
+            max-height: 0; /* Start collapsed */
+            overflow: hidden;
+            transition: max-height 0.3s ease-out; /* Smooth height animation */
+        }
+
+        .categories-list.open {
+            max-height: 20rem; /* Adjust based on content height */
+        }
+
+        .categories-list a {
+            display: block;
+            color: var(--text-color);
+            text-decoration: none;
+            padding: var(--spacing-xs); /* Reduced padding */
+            background: var(--content-bg);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .categories-list a:hover {
+            opacity: 0.9;
+        }
+
+        /* Main Content: Edit form or article view */
+        main {
+            padding: var(--spacing-lg);
+            width: 88vw; /* Adjusted to complement sidebar */
+            float: right;
+        }
+
+        .edit-container, .view-container {
+            max-width: 50rem;
+            margin: 0 auto;
+        }
+
+        .edit-container h1, .view-container h1 {
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--spacing-md);
+            color: var(--text-color); /* Matches body text for consistency */
+        }
+
+        .edit-form {
+            padding: var(--spacing-md);
+            background: var(--content-bg);
+            border-radius: var(--border-radius);
+        }
+
+        .edit-form label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .edit-form input[type="text"],
+        .edit-form textarea {
+            width: 100%;
+            padding: var(--spacing-xs); /* Reduced padding */
+            margin-bottom: var(--spacing-md);
+            border: 1px solid var(--input-border);
+            border-radius: var(--border-radius);
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; /* GitHub-style monospace */
+            font-size: 0.875rem;
+        }
+
+        .edit-form textarea {
+            min-height: 20rem; /* Adequate space for editing */
+            resize: vertical; /* Allow vertical resizing only */
+        }
+
+        .edit-form .form-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .edit-form button {
+            padding: var(--spacing-xs) var(--spacing-sm); /* Reduced padding */
+            background: var(--secondary-bg);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .edit-form button:hover {
+            opacity: 0.9;
+        }
+
+        .edit-form button.cancel {
+            background: #999; /* Distinct color for cancel */
+        }
+
+        .view-container .content {
+            padding: var(--spacing-md);
+            background: var(--content-bg);
+            border-radius: var(--border-radius);
+            white-space: pre-wrap;
+        }
+
+        .view-container .actions {
+            margin-top: var(--spacing-md);
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .view-container button {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background: var(--secondary-bg);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .view-container button:hover {
+            opacity: 0.9;
+        }
+
+        /* Footer: Copyright on left, controls on right */
+        footer {
+            clear: both;
+            background: var(--primary-bg);
+            color: white;
+            padding: var(--spacing-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+        }
+
+        .footer-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        /* Theme toggle switch */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+        }
+
+        .theme-toggle input {
+            display: none; /* Hide default checkbox */
+        }
+
+        .theme-toggle label {
+            width: 2.5rem;
+            height: 1.25rem;
+            background: var(--secondary-bg);
+            border-radius: 1rem;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .theme-toggle label::after {
+            content: '🌙';
+            position: absolute;
+            left: 0.2rem;
+            top: 0.2rem;
+            width: 0.9rem;
+            height: 0.9rem;
+            font-size: 0.6rem; /* Smaller emoji for better fit */
+            line-height: 0.9rem;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle input:checked + label {
+            background: #4caf50;
+        }
+
+        .theme-toggle input:checked + label::after {
+            content: '☀️';
+            transform: translateX(1.2rem);
+        }
+
+        /* Font zoom buttons */
+        .font-zoom {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .font-zoom button {
+            padding: var(--spacing-xs); /* Reduced padding */
+            background: var(--secondary-bg);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            aside, main {
+                width: 100%;
+                float: none;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
+
+            .toolbar {
+                flex-wrap: wrap;
+            }
+
+            footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .footer-controls {
+                width: 100%;
+                justify-content: flex-end; /* Keep controls on right */
+            }
+        }
