@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI.js Tests</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        #test-results h2 { margin-bottom: 10px; }
+        #test-results ul { list-style-type: none; padding: 0; }
+        #test-results li { margin-bottom: 5px; padding: 5px; border-radius: 3px; }
+        #test-results .passed { background-color: #e6ffe6; border-left: 5px solid green; }
+        #test-results .failed { background-color: #ffe6e6; border-left: 5px solid red; }
+        #test-results p { margin-left: 20px; font-size: 0.9em; color: #555; }
+    </style>
+</head>
+<body>
+    <h1>UI.js Test Runner</h1>
+    <p>Opening the browser's developer console (usually F12) will provide more detailed logs.</p>
+    <div id="test-results">
+        <p>Running tests...</p>
+    </div>
+    <script type="module" src="test-ui.js"></script>
+</body>
+</html>
