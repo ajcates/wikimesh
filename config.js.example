@@ -1,0 +1,4 @@
+export const Config = {
+	AI_TYPE: "openai",
+	AI_KEY: "put key here"
+};
