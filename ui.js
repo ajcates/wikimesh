@@ -1,10 +1,13 @@
 // ui.js - Manages DOM interactions and utility functions
-
 import { dbService } from './dbService.js';
+import { Config } from './config.js';
+import { setUpAI } from './ai.js';
 
 // DOM elements for UI interactions
 const titleInput = document.getElementById('title');
 const slugInput = document.getElementById('slug');
+const instructionsInput = document.getElementById('instructions');
+const aiBtn = document.getElementById('ai-btn');
 const contentInput = document.getElementById('content');
 const saveBtn = document.getElementById('save-btn');
 const cancelBtn = document.getElementById('cancel-btn');
@@ -32,11 +35,15 @@ function isValidSlug(slug) {
     return /^[a-z0-9-]+$/.test(slug);
 }
 
+
+
 // Process content to link hashtags
 export function processContent(content) {
     const regex = /#(\w+)/g;
     return content.replace(regex, '<a href="#$1">#$1</a>');
 }
+
+
 
 // Update the article list on home page
 export function updateArticleList(articles) {
@@ -66,6 +73,37 @@ function resetForm() {
 
 // Set up event listeners for UI interactions
 export function setupUI() {
+    const ai = setUpAI(Config.AI_TYPE, Config.AI_KEY);
+    // Handle AI button click
+    aiBtn.addEventListener('click', async () => {
+        const instsructions = instructionsInput.value.trim();
+        if (!instsructions) {
+          instructionsInput.value = 'Please provide instructions.';
+          return;
+        }
+        ai.instruction(instsructions);
+        const content = contentInput.value.trim();
+        const instructions = instructionsInput.value.trim();
+        const prompt = instructions;
+        if (!prompt) {
+            showError('Please enter a prompt.');
+            return;
+        }
+
+        try {
+            //show loading spinner
+            const spinIntv = setInterval(() => {
+              contentInput.value += '...\n';
+            }, 1000);
+
+              
+            const response = await ai.chat(prompt, content);
+            clearInterval(spinIntv);
+            contentInput.value = response;
+        } catch (error) {
+            showError('Error generating response: ' + error.message);
+        }
+    });
     // Auto-generate slug from title
     titleInput.addEventListener('input', () => {
         if (!slugInput.value || slugInput.value === generateSlug(titleInput.value)) {
@@ -77,6 +115,7 @@ export function setupUI() {
     saveBtn.addEventListener('click', () => {
         const title = titleInput.value.trim();
         const slug = slugInput.value.trim();
+        const instructions = instructionsInput.value.trim();
         const content = contentInput.value.trim();
 
         if (!title) {
@@ -106,7 +145,7 @@ export function setupUI() {
                 return;
             }
 
-            const article = { id: window.editingId || Date.now(), title, slug, content };
+            const article = { id: window.editingId || Date.now(), title, slug, content, instructions };
 
             const saveCallback = (saveError) => {
                 if (saveError) {

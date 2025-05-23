@@ -18,12 +18,12 @@
                 <button>🔍</button>
             </form>
             <nav class="toolbar">
-                <a href="#home">🏠 Home</a>
-                <a href="#new">✍️ Create Article</a>
-                <a href="#">📂 Categories</a>
-                <a href="#">✉️ Contact</a>
+                <a href="#home">🏠🏡🛖</a>
+                <a href="#new">🆕✏️📜</a>
+                <a href="#cats">🐱🐯🦁</a>
+                <a href="#settings">⚙️🎛️🛠️</a>
             </nav>
-        </div>
+        </div>       
     </header>
 
     <!-- Sidebar: Collapsible categories with animation -->
@@ -47,6 +47,12 @@
                 <label for="slug">Slug</label>
                 <input type="text" id="slug" placeholder="e.g., my-article-title" required>
                 <p style="font-size: 0.9em; color: var(--text-color);">URL-friendly identifier (lowercase letters, numbers, hyphens only)</p>
+                <label for="instructions">Article Instructions</label>
+                <textarea id="instructions" placeholder="Instructions for the article" required></textarea>
+                <div class="form-actions">
+                    <button type="button" id="preview-btn">👁️ Preview</button>
+                    <button type="button" id="ai-btn">🤖 AI Generate</button>
+                </div>
                 <label for="content">Content</label>
                 <textarea id="content" placeholder="Article content" required></textarea>
                 <div class="form-actions">

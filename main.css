@@ -1,4 +1,24 @@
-   /* Define reusable CSS variables for consistency */
+/*
+#Design Description:
+it is to feel like GitHub, with a focus on simplicity and usability. It uses emojis for icons where appropriate.
+
+The design is responsive, ensuring a good experience on both desktop and mobile devices. The color scheme is inspired by GitHub's light and dark themes, with a focus on readability and accessibility.
+
+#Design Features:
+- **Header**: Contains the logo, search bar, and toolbar for navigation.
+- **Sidebar**: Collapsible categories list for easy navigation.
+- **Main Content**: Two modes - edit and view. The edit mode has a form for editing content, while the view mode displays the content with action buttons.
+- **Footer**: Contains copyright information and controls for theme switching and font size adjustment.
+- **Theme Toggle**: A switch to toggle between light and dark themes.
+
+#Todo:
+- Add more detailed styles for specific components.
+- Make the toolbar fit on one row on smaller screens.
+- Make the form elements more compact and sexy.
+*/
+
+/* Define reusable CSS variables for consistency */
+
         :root {
             /* Light theme colors */
             --primary-bg: #333;
@@ -84,7 +104,7 @@
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; /* GitHub-style monospace */
             font-size: 0.875rem;
         }
-
+                                                        
         .search-bar button {
             padding: var(--spacing-xs) var(--spacing-sm); /* Reduced padding */
             background: var(--secondary-bg);
@@ -168,7 +188,7 @@
 
         /* Main Content: Edit form or article view */
         main {
-            padding: var(--spacing-lg);
+            padding: var(--spacing-md);
             width: 88vw; /* Adjusted to complement sidebar */
             float: right;
         }
@@ -180,12 +200,12 @@
 
         .edit-container h1, .view-container h1 {
             font-size: var(--font-size-lg);
-            margin-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
             color: var(--text-color); /* Matches body text for consistency */
         }
 
         .edit-form {
-            padding: var(--spacing-md);
+            padding: var(--spacing-sm);
             background: var(--content-bg);
             border-radius: var(--border-radius);
         }
@@ -200,7 +220,7 @@
         .edit-form textarea {
             width: 100%;
             padding: var(--spacing-xs); /* Reduced padding */
-            margin-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
             border: 1px solid var(--input-border);
             border-radius: var(--border-radius);
             background: var(--input-bg);
@@ -238,7 +258,7 @@
         }
 
         .view-container .content {
-            padding: var(--spacing-md);
+            padding: var(--spacing-sm);
             background: var(--content-bg);
             border-radius: var(--border-radius);
             white-space: pre-wrap;
