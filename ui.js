@@ -7,7 +7,7 @@
 // - Config: Likely provides configuration values, such as API keys or AI service types, used here for setting up the AI service.
 // - setUpAI: A factory function from ai.js to initialize an AI service instance.
 import { dbService } from './dbService.js';
-import { Config } from './config.js'; // Assuming config.js exists and exports Config
+// import { Config } from './config.js'; // Config may no longer be needed if AI_TYPE is also dynamic or hardcoded
 import { setUpAI } from './ai.js';
 
 // DOM elements fetched at the beginning for efficient access and manipulation throughout the UI logic:
@@ -22,22 +22,33 @@ import { setUpAI } from './ai.js';
 // - categoriesList: The container for the categories list (likely part of the sidebar).
 // - editBtn: Button available on the article view page to switch to the edit mode for that article.
 // - backToHomeBtn: Button available on article view/edit pages to navigate back to the home page.
+// Article form inputs
 const titleInput = document.getElementById('title');
 const slugInput = document.getElementById('slug');
-const instructionsInput = document.getElementById('instructions');
+const instructionsInput = document.getElementById('instructions'); // For article specific instructions
 const aiBtn = document.getElementById('ai-btn');
 const contentInput = document.getElementById('content');
-const saveBtn = document.getElementById('save-btn');
-const cancelBtn = document.getElementById('cancel-btn');
-const errorMsg = document.getElementById('error-msg');
+const saveBtn = document.getElementById('save-btn'); // For articles
+const cancelBtn = document.getElementById('cancel-btn'); // For articles
+const errorMsg = document.getElementById('error-msg'); // For article form errors
 const articleList = document.getElementById('article-list');
+
+// Theme and UI controls
 const themeSwitch = document.getElementById('theme-switch');
 const zoomOutBtn = document.getElementById('zoom-out-btn');
 const zoomInBtn = document.getElementById('zoom-in-btn');
 const categoriesToggle = document.querySelector('.categories-toggle');
 const categoriesList = document.getElementById('categories-list');
-const editBtn = document.getElementById('edit-btn');
+
+// Navigation buttons
+const editBtn = document.getElementById('edit-btn'); // To edit an article from view page
 const backToHomeBtn = document.getElementById('back-to-home-btn');
+
+// Settings page elements
+const apiKeyInput = document.getElementById('apiKey');
+const defaultInstructionsInput = document.getElementById('defaultInstructions');
+const saveSettingsBtn = document.getElementById('save-settings-btn');
+const settingsMsg = document.getElementById('settings-msg');
 
 /**
  * @function generateSlug
@@ -123,6 +134,7 @@ function resetForm() {
     titleInput.value = '';
     slugInput.value = '';
     contentInput.value = '';
+    if (instructionsInput) instructionsInput.value = ''; // Clear article-specific instructions
     saveBtn.textContent = '💾 Save';
     window.editingId = null; // Clear the global editing state indicator
 }
@@ -132,46 +144,71 @@ function resetForm() {
  * @description Initializes all UI-related event listeners and sets up the AI service.
  * This function is intended to be called once when the application starts.
  */
-export function setupUI() {
-    // Initialize the AI service using type and key from Config.
+export async function setupUI() { // Make setupUI async
     // The 'ai' instance will be used for AI-assisted content generation.
-    const ai = setUpAI(Config.AI_TYPE, Config.AI_KEY);
+    let ai;
+    // AI_TYPE could also come from settings in the future, or remain in a config if static.
+    const aiType = "openai"; // Using "openai" directly as per example. Or use Config.AI_TYPE if it's still relevant.
 
-    // Event listener for the AI button (aiBtn):
-    // Handles AI-powered content generation or assistance.
-    aiBtn.addEventListener('click', async () => {
-        const instructionsValue = instructionsInput.value.trim(); // Get AI instructions from input
-        if (!instructionsValue) {
-          instructionsInput.value = 'Please provide instructions.'; // Basic validation
-          return;
+    try {
+        ai = await setUpAI(aiType); // setUpAI now fetches the key from dbService
+        console.log("AI service initialized successfully using API key from settings.");
+
+        // Event listener for the AI button (aiBtn):
+        // Handles AI-powered content generation or assistance.
+        if (aiBtn) {
+            aiBtn.addEventListener('click', async () => {
+                if (!ai || !ai.service) { // Check if ai or its service is properly initialized
+                    showError("AI service is not available. Please check settings and API key.");
+                    return;
+                }
+
+                const instructionsValue = instructionsInput.value.trim(); // Get AI instructions from input
+                if (!instructionsValue && instructionsInput) {
+                    instructionsInput.value = 'Please provide instructions.'; // Basic validation
+                    return;
+                }
+
+                // Ensure ai.instruction method exists and is callable
+                if (typeof ai.instruction === 'function') {
+                    ai.instruction(instructionsValue); // Set instructions for the AI service
+                } else {
+                    showError("AI service instruction method not available.");
+                    return;
+                }
+
+                const currentContent = contentInput.value.trim(); // Get current content from textarea
+                // The prompt for the AI is set to be the instructions themselves.
+                const prompt = instructionsValue;
+
+                if (!prompt) {
+                    showError('Please enter a prompt (instructions).');
+                    return;
+                }
+
+                let spinIntv; // Declare here to be accessible in finally block
+                try {
+                    // Unconventional loading indicator: appends "..." to the content input periodically.
+                    spinIntv = setInterval(() => {
+                        if (contentInput) contentInput.value += '...\n';
+                    }, 1000);
+
+                    // Call the AI's chat method with the prompt and current article content.
+                    const response = await ai.chat(prompt, currentContent);
+                    if (contentInput) contentInput.value = response; // Replace content with AI's response.
+                } catch (error) {
+                    showError('Error generating response: ' + error.message);
+                } finally {
+                    if (spinIntv) clearInterval(spinIntv); // Stop the loading indicator.
+                }
+            });
         }
-        ai.instruction(instructionsValue); // Set instructions for the AI service
-
-        const currentContent = contentInput.value.trim(); // Get current content from textarea
-        // The prompt for the AI is set to be the instructions themselves.
-        // The 'currentContent' is passed as the 'article' parameter to the AI's chat method.
-        const prompt = instructionsValue;
-
-        if (!prompt) { // Should be redundant due to the earlier check, but good for safety.
-            showError('Please enter a prompt (instructions).');
-            return;
+    } catch (error) {
+        console.error("Failed to set up AI:", error);
+        if (typeof showError === 'function') { // Ensure showError is available
+            showError("Failed to initialize AI services. Check settings & API key.");
         }
-
-        try {
-            // Unconventional loading indicator: appends "..." to the content input periodically.
-            // This provides visual feedback that an AI operation is in progress.
-            const spinIntv = setInterval(() => {
-              contentInput.value += '...\n';
-            }, 1000);
-
-            // Call the AI's chat method with the prompt and current article content.
-            const response = await ai.chat(prompt, currentContent);
-            clearInterval(spinIntv); // Stop the loading indicator.
-            contentInput.value = response; // Replace content with AI's response.
-        } catch (error) {
-            showError('Error generating response: ' + error.message);
-        }
-    });
+    }
 
     // Event listener for the title input field (titleInput):
     // Automatically generates a slug in the slug input field (slugInput) as the user types a title.
@@ -306,4 +343,37 @@ export function setupUI() {
     backToHomeBtn.addEventListener('click', () => {
         window.location.hash = '#home';
     });
+
+    // Event listener for the save settings button (saveSettingsBtn):
+    // Handles saving the application settings (API key, default instructions).
+    if (saveSettingsBtn) { // Ensure the button exists on the page (it won't in test environments without full HTML)
+        saveSettingsBtn.addEventListener('click', () => {
+            const apiKey = apiKeyInput.value.trim();
+            const defaultInstructions = defaultInstructionsInput.value.trim();
+
+            const settings = { apiKey, defaultInstructions };
+
+            dbService.saveSettings(settings, (error) => {
+                // Clear previous messages
+                settingsMsg.textContent = '';
+                settingsMsg.style.display = 'none';
+                settingsMsg.className = ''; // Reset any specific class
+
+                if (error) {
+                    settingsMsg.textContent = 'Error saving settings: ' + error.message;
+                    settingsMsg.style.color = 'red'; // Using direct style for simplicity
+                    settingsMsg.className = 'error-message'; // Or use a class
+                } else {
+                    settingsMsg.textContent = 'Settings saved successfully!';
+                    settingsMsg.style.color = 'green'; // Using direct style for simplicity
+                    settingsMsg.className = 'success-message'; // Or use a class
+                    setTimeout(() => {
+                        settingsMsg.style.display = 'none';
+                        settingsMsg.className = '';
+                    }, 3000); // Hide message after 3 seconds
+                }
+                settingsMsg.style.display = 'block';
+            });
+        });
+    }
 }

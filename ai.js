@@ -177,9 +177,33 @@ class AI {
  * Currently, it defaults to creating an AI instance with the OpenAI service.
  * @param {string} type - The type of AI service to use (e.g., "openai").
  * @param {string} apiKey - The API key for the selected AI service.
- * @returns {AI} An instance of the AI class, configured with the specified service.
+ * @returns {Promise<AI>} A promise that resolves with an instance of the AI class.
  */
-export function setUpAI(type, apiKey) {
-  const ai = new AI("openai", apiKey); // Creates a new AI instance (currently hardcoded to 'openai')
-  return ai;
+import { dbService } from './dbService.js'; // Moved import here
+
+export async function setUpAI(type) {
+  return new Promise((resolve, reject) => {
+    dbService.getSettings((error, settings) => {
+      if (error) {
+        console.error("Error getting settings for AI setup:", error);
+        reject(new Error("Could not retrieve settings for AI initialization."));
+        return;
+      }
+
+      let apiKeyFromSettings = null;
+      if (!settings || !settings.apiKey) {
+        console.warn("API key not found in settings. AI service might not work correctly if API calls are made.");
+        // The AI class constructor (OpenAIService) will receive null or empty string,
+        // and it should ideally handle this (e.g. by failing only when an actual API call is made).
+      } else {
+        apiKeyFromSettings = settings.apiKey;
+      }
+
+      // Note: The 'type' parameter is passed to new AI(), which then uses it.
+      // The previous comment about "openai" being hardcoded in AI constructor was incorrect,
+      // AI constructor does use the 'type' parameter.
+      const ai = new AI(type, apiKeyFromSettings);
+      resolve(ai);
+    });
+  });
 }

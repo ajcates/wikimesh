@@ -30,6 +30,12 @@ const titleInput = document.getElementById('title');
 const slugInput = document.getElementById('slug');
 const contentInput = document.getElementById('content');
 const saveBtn = document.getElementById('save-btn');
+const instructionsInput = document.getElementById('instructions'); // For article specific instructions
+
+// Settings page elements
+const settingsContainer = document.getElementById('settings-container');
+const apiKeyInput = document.getElementById('apiKey');
+const defaultInstructionsInput = document.getElementById('defaultInstructions');
 
 // Global variable `prefillSlug`:
 // This variable is used to carry a slug from a "not found" page to the new article form.
@@ -47,6 +53,7 @@ function hideAllContainers() {
     editContainer.style.display = 'none';
     viewContainer.style.display = 'none';
     homeContainer.style.display = 'none';
+    settingsContainer.style.display = 'none';
 }
 
 /**
@@ -71,6 +78,19 @@ export function handleRoute() {
         titleInput.value = '';
         slugInput.value = prefillSlug || ''; // Use prefillSlug if available (e.g., from a "not found" prompt).
         contentInput.value = '';
+
+        // Populate instructions field with default instructions from settings
+        if (instructionsInput) { // Ensure the element is available
+            dbService.getSettings((error, settings) => {
+                if (error) {
+                    console.error('Error fetching settings for default instructions:', error);
+                    instructionsInput.value = ''; // Fallback to empty on error
+                } else {
+                    instructionsInput.value = (settings && settings.defaultInstructions) ? settings.defaultInstructions : '';
+                }
+            });
+        }
+
         editContainer.style.display = 'block'; // Show the edit/new form container.
         prefillSlug = null; // Clear prefillSlug after it has been used.
         window.editingId = null; // Reset editingId, indicating a new article, not an edit.
@@ -92,6 +112,10 @@ export function handleRoute() {
                 titleInput.value = article.title;
                 slugInput.value = article.slug;
                 contentInput.value = article.content;
+                // Populate instructions field with the article's specific instructions
+                if (instructionsInput) {
+                    instructionsInput.value = article.instructions || '';
+                }
                 formTitle.textContent = 'Edit Article'; // Set form title for editing.
                 saveBtn.textContent = '💾 Update'; // Set button text for updating.
                 editContainer.style.display = 'block'; // Show the edit/new form container.
@@ -107,6 +131,20 @@ export function handleRoute() {
                 updateArticleList(articles); // Update the UI with the list of articles.
                 homeContainer.style.display = 'block'; // Show the home container.
             }
+        });
+    } else if (hash === '#settings') {
+        // Route: #settings - Display the settings page.
+        // hideAllContainers(); // Already called at the start of handleRoute
+        dbService.getSettings((error, settings) => {
+            if (error) {
+                console.error('Error fetching settings:', error);
+                // Optionally, display an error to the user in settingsContainer or via a general message area
+                settingsContainer.innerHTML = '<p>Error loading settings. Please try again later.</p>';
+            } else {
+                apiKeyInput.value = settings.apiKey || '';
+                defaultInstructionsInput.value = settings.defaultInstructions || '';
+            }
+            settingsContainer.style.display = 'block'; // Show the settings container.
         });
     } else {
         // Default route: #:slug - Display a single article by its slug.

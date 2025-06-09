@@ -25,9 +25,14 @@ export function initializeDB() {
         dbRequest.onupgradeneeded = function(event) {
             db = event.target.result; // Get the database instance.
             // Create an object store named 'articles' with 'id' as the key.
-            const objectStore = db.createObjectStore('articles', { keyPath: 'id' });
+            const articlesObjectStore = db.createObjectStore('articles', { keyPath: 'id' });
             // Create an index named 'slug' on the 'slug' property. 'unique: true' ensures no duplicate slugs.
-            objectStore.createIndex('slug', 'slug', { unique: true });
+            articlesObjectStore.createIndex('slug', 'slug', { unique: true });
+
+            // Create an object store named 'settings'
+            if (!db.objectStoreNames.contains('settings')) {
+                db.createObjectStore('settings');
+            }
         };
 
         // This event is triggered when the database is successfully opened.
@@ -153,5 +158,85 @@ export const dbService = {
         request.onsuccess = () => callback(null, request.result);
         // Handle error during retrieval.
         request.onerror = (event) => callback(event.target.error);
+    },
+
+    /**
+     * @method saveSettings
+     * @description Saves a settings object to the 'settings' object store.
+     * It uses a 'readwrite' transaction and a fixed key 'userSettings'.
+     * @param {Object} settings - The settings object to save.
+     * @param {function(Error|null, any=): void} callback - A callback function invoked upon completion.
+     */
+    saveSettings(settings, callback) {
+        if (!db) { // Check if the database is initialized.
+            callback(new Error('Database not initialized'));
+            return;
+        }
+        // Start a 'readwrite' transaction on the 'settings' object store.
+        const transaction = db.transaction(['settings'], 'readwrite');
+        const objectStore = transaction.objectStore('settings');
+        // Request to save the settings object with a fixed key.
+        const request = objectStore.put(settings, 'userSettings');
+
+        // Handle successful save.
+        request.onsuccess = () => callback(null);
+        // Handle error during save.
+        request.onerror = (event) => callback(event.target.error);
+    },
+
+    /**
+     * @method getSettings
+     * @description Retrieves the settings object from the 'settings' object store.
+     * Uses a 'readonly' transaction and the fixed key 'userSettings'.
+     * Returns a default settings object if no settings are found.
+     * @param {function(Error|null, Object=): void} callback - A callback function invoked upon completion.
+     * It receives an error object if the operation fails, or null and the settings object if successful.
+     */
+    getSettings(callback) {
+        if (!db) { // Check if the database is initialized.
+            callback(new Error('Database not initialized'));
+            return;
+        }
+        // Start a 'readonly' transaction on the 'settings' object store.
+        const transaction = db.transaction(['settings'], 'readonly');
+        const objectStore = transaction.objectStore('settings');
+        // Request to get the settings object by its fixed key.
+        const request = objectStore.get('userSettings');
+
+        // Handle successful retrieval.
+        request.onsuccess = () => {
+            if (request.result) {
+                callback(null, request.result);
+            } else {
+                // Return default settings if nothing is found
+                callback(null, { apiKey: '', defaultInstructions: '' });
+            }
+        };
+        // Handle error during retrieval.
+        request.onerror = (event) => callback(event.target.error);
     }
-};;
+};
+
+export function deleteDB() {
+    return new Promise((resolve, reject) => {
+        if (db) {
+            db.close(); // Close connection before deleting
+            db = null;  // Reset db variable
+        }
+        const deleteRequest = indexedDB.deleteDatabase('WikiArticles');
+        deleteRequest.onsuccess = () => {
+            console.log('WikiArticles database deleted successfully.');
+            resolve();
+        };
+        deleteRequest.onerror = (event) => {
+            console.error('Error deleting database:', event.target.error);
+            reject(event.target.error);
+        };
+        deleteRequest.onblocked = () => {
+            console.warn('Database deletion blocked. Close other connections.');
+            // This can happen if the DB is still open in another tab/window.
+            // For automated tests, this should ideally not occur if managed well.
+            reject(new Error('Database deletion blocked.'));
+        };
+    });
+}

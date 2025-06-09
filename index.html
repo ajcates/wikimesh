@@ -74,6 +74,21 @@
             <h1>Articles</h1>
             <ul id="article-list"></ul>
         </div>
+
+        <!-- Settings Page Container -->
+        <div id="settings-container" style="display: none;">
+            <h1>Settings</h1>
+            <div class="settings-form">
+                <label for="apiKey">OpenAI API Key</label>
+                <input type="password" id="apiKey" placeholder="Enter your OpenAI API Key">
+
+                <label for="defaultInstructions">Default Article Instructions</label>
+                <textarea id="defaultInstructions" placeholder="Enter default instructions for new articles"></textarea>
+
+                <button type="button" id="save-settings-btn">💾 Save Settings</button>
+                <p id="settings-msg" style="color: green; display: none;"></p>
+            </div>
+        </div>
     </main>
 
     <!-- Footer: Copyright on left, controls on right -->
@@ -103,7 +118,7 @@
                 // Initialize IndexedDB and wait for it to be ready
                 await initializeDB();
                 // Set up UI event listeners
-                setupUI();
+                await setupUI(); // Await setupUI as it's now async
                 // Handle initial route based on URL hash
                 handleRoute();
                 // Listen for hash changes to update route
