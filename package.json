@@ -1,0 +1,37 @@
+{
+  "name": "wikimesh",
+  "version": "1.0.0",
+  "description": "A offline first mobile wiki system",
+  "keywords": [
+    "offline",
+    "mobile",
+    "wiki"
+  ],
+  "homepage": "https://github.com/ajcates/wikimesh#readme",
+  "bugs": {
+    "url": "https://github.com/ajcates/wikimesh/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ajcates/wikimesh.git"
+  },
+  "license": "BSD-2-Clause",
+  "author": "ajcates",
+  "type": "module",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "live-server "
+  },
+  "devDependencies": {
+    "git-scripts": "^0.6.4",
+    "surge": "^0.0.0"
+  },
+  "git": {
+    "scripts": {
+      "pre-push": "surge --project ./ --domain wikimeshtest.surge.sh"
+    }
+  }
+}
