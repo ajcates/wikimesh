@@ -1,9 +1,27 @@
-// ui.js - Manages DOM interactions and utility functions
+// ui.js - Manages DOM interactions, UI updates, and utility functions related to the user interface.
+// This file is central to how the user interacts with the application, handling form inputs,
+// button clicks, dynamic content updates, and visual feedback.
+
+// Imported modules:
+// - dbService: Used for database operations like saving, updating, and fetching articles, crucial for UI actions that involve data persistence.
+// - Config: Likely provides configuration values, such as API keys or AI service types, used here for setting up the AI service.
+// - setUpAI: A factory function from ai.js to initialize an AI service instance.
 import { dbService } from './dbService.js';
-import { Config } from './config.js';
+import { Config } from './config.js'; // Assuming config.js exists and exports Config
 import { setUpAI } from './ai.js';
 
-// DOM elements for UI interactions
+// DOM elements fetched at the beginning for efficient access and manipulation throughout the UI logic:
+// - titleInput, slugInput, instructionsInput, contentInput: Input fields for the article form.
+// - aiBtn: Button to trigger AI-assisted content generation.
+// - saveBtn, cancelBtn: Buttons for saving/canceling article edits.
+// - errorMsg: Element to display error messages to the user.
+// - articleList: The <ul> element where the list of articles is displayed on the home page.
+// - themeSwitch: A checkbox or toggle for switching between light and dark themes.
+// - zoomOutBtn, zoomInBtn: Buttons to adjust the application's font size.
+// - categoriesToggle: Button to show/hide the categories sidebar.
+// - categoriesList: The container for the categories list (likely part of the sidebar).
+// - editBtn: Button available on the article view page to switch to the edit mode for that article.
+// - backToHomeBtn: Button available on article view/edit pages to navigate back to the home page.
 const titleInput = document.getElementById('title');
 const slugInput = document.getElementById('slug');
 const instructionsInput = document.getElementById('instructions');
@@ -21,33 +39,61 @@ const categoriesList = document.getElementById('categories-list');
 const editBtn = document.getElementById('edit-btn');
 const backToHomeBtn = document.getElementById('back-to-home-btn');
 
-// Generate slug from title
+/**
+ * @function generateSlug
+ * @description Creates a URL-friendly slug from a given title string.
+ * It converts the title to lowercase, removes special characters (allowing only letters, numbers, and spaces),
+ * replaces spaces with hyphens, collapses multiple hyphens into one, and trims leading/trailing hyphens.
+ * If the process results in an empty string, it defaults to 'article-' followed by the current timestamp.
+ * @param {string} title - The title to be converted into a slug.
+ * @returns {string} The generated slug.
+ */
 export function generateSlug(title) {
     return title.toLowerCase()
-        .replace(/[^a-z0-9 ]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .trim('-') || 'article-' + Date.now();
+        .replace(/[^a-z0-9 ]/g, '') // Remove non-alphanumeric characters except spaces
+        .replace(/\s+/g, '-')    // Replace spaces with hyphens
+        .replace(/-+/g, '-')     // Replace multiple hyphens with a single hyphen
+        .trim('-')               // Trim hyphens from start and end
+        || 'article-' + Date.now(); // Fallback for empty titles
 }
 
-// Validate slug format
+/**
+ * @function isValidSlug
+ * @description Validates the format of a given slug.
+ * A valid slug must consist only of lowercase letters, numbers, and hyphens.
+ * @param {string} slug - The slug to validate.
+ * @returns {boolean} True if the slug is valid, false otherwise.
+ */
 function isValidSlug(slug) {
     return /^[a-z0-9-]+$/.test(slug);
 }
 
 
-
-// Process content to link hashtags
+/**
+ * @function processContent
+ * @description Transforms raw text content for display.
+ * Specifically, it finds patterns like #hashtag and converts them into clickable HTML links
+ * that navigate to a route corresponding to the hashtag (e.g., "#hashtag" becomes "<a href="#hashtag">#hashtag</a>").
+ * This is useful for creating internal links or tags within article content.
+ * @param {string} content - The raw text content to process.
+ * @returns {string} The processed content with hashtags converted to links.
+ */
 export function processContent(content) {
-    const regex = /#(\w+)/g;
-    return content.replace(regex, '<a href="#$1">#$1</a>');
+    const regex = /#(\w+)/g; // Matches # followed by one or more word characters
+    return content.replace(regex, '<a href="#$1">#$1</a>'); // Replaces with an anchor tag
 }
 
 
-
-// Update the article list on home page
+/**
+ * @function updateArticleList
+ * @description Dynamically builds and updates the list of articles displayed on the home page.
+ * It clears any existing items in the `articleList` element and then iterates over the provided
+ * array of article objects, creating a list item (`<li>`) with a link (`<a>`) for each article.
+ * The link's href is set to the article's slug (e.g., `#article-slug`).
+ * @param {Array<Object>} articles - An array of article objects, each expected to have `slug` and `title` properties.
+ */
 export function updateArticleList(articles) {
-    articleList.innerHTML = '';
+    articleList.innerHTML = ''; // Clear existing list items
     articles.forEach(article => {
         const li = document.createElement('li');
         li.innerHTML = `<a href="#${article.slug}">${article.title}</a>`;
@@ -55,151 +101,208 @@ export function updateArticleList(articles) {
     });
 }
 
-// Show error message to the user
+/**
+ * @function showError
+ * @description Displays an error message to the user in the `errorMsg` DOM element.
+ * The message becomes visible and then automatically hides after 3 seconds.
+ * @param {string} message - The error message to display.
+ */
 function showError(message) {
     errorMsg.textContent = message;
     errorMsg.style.display = 'block';
-    setTimeout(() => errorMsg.style.display = 'none', 3000);
+    setTimeout(() => errorMsg.style.display = 'none', 3000); // Hide after 3 seconds
 }
 
-// Reset the edit form
+/**
+ * @function resetForm
+ * @description Clears the input fields (title, slug, content) of the new/edit article form.
+ * It also resets the text of the save button to "💾 Save" (its default state for new articles)
+ * and clears `window.editingId`, indicating that any subsequent save operation should create a new article.
+ */
 function resetForm() {
     titleInput.value = '';
     slugInput.value = '';
     contentInput.value = '';
     saveBtn.textContent = '💾 Save';
-    window.editingId = null; // Clear editing state
+    window.editingId = null; // Clear the global editing state indicator
 }
 
-// Set up event listeners for UI interactions
+/**
+ * @function setupUI
+ * @description Initializes all UI-related event listeners and sets up the AI service.
+ * This function is intended to be called once when the application starts.
+ */
 export function setupUI() {
+    // Initialize the AI service using type and key from Config.
+    // The 'ai' instance will be used for AI-assisted content generation.
     const ai = setUpAI(Config.AI_TYPE, Config.AI_KEY);
-    // Handle AI button click
+
+    // Event listener for the AI button (aiBtn):
+    // Handles AI-powered content generation or assistance.
     aiBtn.addEventListener('click', async () => {
-        const instsructions = instructionsInput.value.trim();
-        if (!instsructions) {
-          instructionsInput.value = 'Please provide instructions.';
+        const instructionsValue = instructionsInput.value.trim(); // Get AI instructions from input
+        if (!instructionsValue) {
+          instructionsInput.value = 'Please provide instructions.'; // Basic validation
           return;
         }
-        ai.instruction(instsructions);
-        const content = contentInput.value.trim();
-        const instructions = instructionsInput.value.trim();
-        const prompt = instructions;
-        if (!prompt) {
-            showError('Please enter a prompt.');
+        ai.instruction(instructionsValue); // Set instructions for the AI service
+
+        const currentContent = contentInput.value.trim(); // Get current content from textarea
+        // The prompt for the AI is set to be the instructions themselves.
+        // The 'currentContent' is passed as the 'article' parameter to the AI's chat method.
+        const prompt = instructionsValue;
+
+        if (!prompt) { // Should be redundant due to the earlier check, but good for safety.
+            showError('Please enter a prompt (instructions).');
             return;
         }
 
         try {
-            //show loading spinner
+            // Unconventional loading indicator: appends "..." to the content input periodically.
+            // This provides visual feedback that an AI operation is in progress.
             const spinIntv = setInterval(() => {
               contentInput.value += '...\n';
             }, 1000);
 
-              
-            const response = await ai.chat(prompt, content);
-            clearInterval(spinIntv);
-            contentInput.value = response;
+            // Call the AI's chat method with the prompt and current article content.
+            const response = await ai.chat(prompt, currentContent);
+            clearInterval(spinIntv); // Stop the loading indicator.
+            contentInput.value = response; // Replace content with AI's response.
         } catch (error) {
             showError('Error generating response: ' + error.message);
         }
     });
-    // Auto-generate slug from title
+
+    // Event listener for the title input field (titleInput):
+    // Automatically generates a slug in the slug input field (slugInput) as the user types a title.
+    // This only happens if the slug field is empty or if its current value was also auto-generated from the previous title.
     titleInput.addEventListener('input', () => {
+        // Check if slug field is empty or if its current value matches the slug generated from the *current* title input value
+        // This logic might be slightly off if the user manually edits the slug then edits title again.
+        // A more robust check might involve storing a flag if the slug was user-edited.
         if (!slugInput.value || slugInput.value === generateSlug(titleInput.value)) {
             slugInput.value = generateSlug(titleInput.value);
         }
     });
 
-    // Save or update article
+    // Event listener for the save button (saveBtn):
+    // Handles creating a new article or updating an existing one.
     saveBtn.addEventListener('click', () => {
         const title = titleInput.value.trim();
-        const slug = slugInput.value.trim();
-        const instructions = instructionsInput.value.trim();
+        const slug = slugInput.value.trim(); // Slug is taken from input, might have been auto-generated or manually edited.
+        const instructions = instructionsInput.value.trim(); // Instructions are saved with the article.
         const content = contentInput.value.trim();
 
-        if (!title) {
+        if (!title) { // Basic validation for title.
             showError('Title is required.');
             return;
         }
 
+        // If slug is empty (e.g., user cleared it), generate it from the title.
         if (!slug) {
-            slugInput.value = generateSlug(title);
+            slugInput.value = generateSlug(title); // Update the input field as well.
+            // Re-assign slug as generateSlug might have produced a different value if title was empty initially.
+            // However, the above check for `!title` should prevent this.
         }
 
-        if (!isValidSlug(slug)) {
+        // Validate slug format (lowercase, numbers, hyphens).
+        if (!isValidSlug(slugInput.value)) { // Use slugInput.value as it might have been auto-generated if slug was empty.
             showError('Slug must contain only lowercase letters, numbers, and hyphens.');
             return;
         }
 
-        // Check if the slug already exists
-        dbService.getArticle(slug, (error, existingArticle) => {
+        // Check if the slug already exists to prevent duplicates.
+        // This is important because slugs are used as unique identifiers in URLs.
+        dbService.getArticle(slugInput.value, (error, existingArticle) => {
             if (error) {
                 showError('Error checking slug: ' + error.message);
                 return;
             }
 
-            // If editing, allow the same slug for the current article
+            // Allow using the same slug IF we are editing the article that already has that slug.
+            // `window.editingId` is set by the router when navigating to `#edit/:slug`.
             if (existingArticle && (!window.editingId || existingArticle.id !== window.editingId)) {
                 showError('Slug already in use. Please choose another.');
                 return;
             }
 
-            const article = { id: window.editingId || Date.now(), title, slug, content, instructions };
+            // Prepare article object. Use `window.editingId` if it exists (update), otherwise generate a new ID (create).
+            const article = {
+                id: window.editingId || Date.now(),
+                title,
+                slug: slugInput.value, // Use the potentially auto-corrected or validated slug from input.
+                content,
+                instructions
+            };
 
+            // Callback function for both save and update operations.
             const saveCallback = (saveError) => {
                 if (saveError) {
                     showError('Error saving article: ' + saveError.message);
                 } else {
-                    resetForm();
-                    window.location.hash = '#home';
+                    resetForm(); // Clear the form.
+                    window.location.hash = '#home'; // Navigate back to the home page.
                 }
             };
 
+            // Distinguish between creating a new article and updating an existing one.
             if (window.editingId) {
-                dbService.updateArticle(article, saveCallback);
+                dbService.updateArticle(article, saveCallback); // Update existing article.
             } else {
-                dbService.saveArticle(article, saveCallback);
+                dbService.saveArticle(article, saveCallback); // Create new article.
             }
         });
     });
 
-    // Cancel editing and return to home
+    // Event listener for the cancel button (cancelBtn):
+    // Resets the form and navigates the user back to the home page.
     cancelBtn.addEventListener('click', () => {
         resetForm();
         window.location.hash = '#home';
     });
 
-    // Toggle theme
+    // Event listener for the theme switch toggle:
+    // Toggles a `data-theme` attribute on the `<body>` element between 'light' and 'dark'.
+    // CSS rules would then apply different styles based on this attribute.
     themeSwitch.addEventListener('change', () => {
         document.body.setAttribute('data-theme', themeSwitch.checked ? 'dark' : 'light');
     });
 
-    // Adjust font size
+    // Event listeners for zoom out and zoom in buttons:
+    // Adjust the root font size of the document (`documentElement`, i.e., `<html>` tag).
+    // This allows for a simple text scaling feature.
     zoomOutBtn.addEventListener('click', () => {
         const root = document.documentElement;
         const currentSize = parseFloat(getComputedStyle(root).fontSize);
-        root.style.fontSize = `${currentSize - 0.1}rem`;
+        root.style.fontSize = `${currentSize - 0.1}rem`; // Decrease by 0.1rem
     });
     zoomInBtn.addEventListener('click', () => {
         const root = document.documentElement;
         const currentSize = parseFloat(getComputedStyle(root).fontSize);
-        root.style.fontSize = `${currentSize + 0.1}rem`;
+        root.style.fontSize = `${currentSize + 0.1}rem`; // Increase by 0.1rem
     });
 
-    // Toggle categories sidebar
+    // Event listener for the categories toggle button:
+    // Toggles CSS classes 'collapsed' on the toggle button itself and 'open' on the `categoriesList` element.
+    // This is likely used to control the visibility or collapsed/expanded state of a sidebar.
     categoriesToggle.addEventListener('click', () => {
         categoriesToggle.classList.toggle('collapsed');
         categoriesList.classList.toggle('open');
     });
 
-    // Navigate to edit page
+    // Event listener for the edit button (editBtn):
+    // This button is typically visible when viewing an article.
+    // It navigates the user to the edit page for the currently viewed article.
+    // It assumes the current article's slug is in `window.location.hash`.
     editBtn.addEventListener('click', () => {
-        const slug = window.location.hash.split('#')[1];
-        window.location.hash = `#edit/${slug}`;
+        const slug = window.location.hash.split('#')[1]; // Get slug from current URL hash.
+        if (slug) { // Ensure there is a slug.
+            window.location.hash = `#edit/${slug}`; // Navigate to the edit route.
+        }
     });
 
-    // Navigate back to home
+    // Event listener for the back to home button (backToHomeBtn):
+    // Navigates the user to the home page ('#home').
     backToHomeBtn.addEventListener('click', () => {
         window.location.hash = '#home';
     });
