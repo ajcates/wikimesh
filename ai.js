@@ -88,6 +88,12 @@ class OpenAIService extends AIService {
    * @throws {Error} If the API request fails.
    */
   async chat(prompt) {
+    if (!this.apiKey || typeof this.apiKey !== 'string' || this.apiKey.trim() === "") {
+        console.error("[DEBUG] OpenAIService.chat: API Key is missing or invalid. Aborting fetch.");
+        throw new Error("API key is missing or invalid. Please check your settings.");
+    }
+    console.log("[DEBUG] OpenAIService.chat: Using API Key:", this.apiKey);
+    console.log("[DEBUG] OpenAIService.chat: Type of API Key:", typeof this.apiKey);
     const response = await fetch(`${this.apiUrl}/chat/completions`, { // API endpoint for chat
       method: "POST",
       headers: {
@@ -105,7 +111,16 @@ class OpenAIService extends AIService {
     });
 
     if (!response.ok) {
-      throw new Error("Error fetching chat response"); // Handles API errors
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // Ignore if error response is not JSON
+      }
+      const errorMessage = errorData && errorData.error && errorData.error.message
+                           ? errorData.error.message
+                           : `HTTP error ${response.status}`;
+      throw new Error(`Error fetching chat response: ${errorMessage}`);
     }
     
     const data = await response.json();
@@ -202,6 +217,7 @@ export async function setUpAI(type) {
       // Note: The 'type' parameter is passed to new AI(), which then uses it.
       // The previous comment about "openai" being hardcoded in AI constructor was incorrect,
       // AI constructor does use the 'type' parameter.
+      console.log("[DEBUG] setUpAI: API Key from settings:", apiKeyFromSettings);
       const ai = new AI(type, apiKeyFromSettings);
       resolve(ai);
     });

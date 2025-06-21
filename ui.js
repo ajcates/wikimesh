@@ -152,7 +152,8 @@ export async function setupUI() { // Make setupUI async
 
     try {
         ai = await setUpAI(aiType); // setUpAI now fetches the key from dbService
-        console.log("AI service initialized successfully using API key from settings.");
+        console.log("[DEBUG] setupUI: AI service initialized. API Key on ai.service:", ai && ai.service ? ai.service.apiKey : "ai.service is undefined");
+        // console.log("AI service initialized successfully using API key from settings."); // Original log, can be kept or removed
 
         // Event listener for the AI button (aiBtn):
         // Handles AI-powered content generation or assistance.
@@ -160,8 +161,10 @@ export async function setupUI() { // Make setupUI async
             aiBtn.addEventListener('click', async () => {
                 if (!ai || !ai.service) { // Check if ai or its service is properly initialized
                     showError("AI service is not available. Please check settings and API key.");
+                    console.error("[DEBUG] aiBtn click: AI service not available (ai or ai.service is null/undefined).");
                     return;
                 }
+                console.log("[DEBUG] aiBtn click: API Key on ai.service before chat:", ai.service.apiKey);
 
                 const instructionsValue = instructionsInput.value.trim(); // Get AI instructions from input
                 if (!instructionsValue && instructionsInput) {
